@@ -1,0 +1,18 @@
+# Editor settings
+.vscode/
+
+# Keil user settings and build outputs
+MDK-ARM/CtrlBoard-H7_IMU/
+MDK-ARM/*.uvguix.*
+MDK-ARM/*.uvoptx
+MDK-ARM/JLinkLog.txt
+MDK-ARM/JLinkSettings.ini
+MDK-ARM/*.lst
+
+# Backup and temporary files
+*.Bak
+*.bak
+*.tmp
+*.log
+Thumbs.db
+Desktop.ini
