@@ -30,6 +30,8 @@
 #include "chassisL_task.h"
 #include "observe_task.h"
 #include "ps2_task.h"
+#include "gamepad_task.h"
+#include "remote_input_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -233,7 +235,11 @@ void PS2_Task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+#if __RC_TYPE == RC_PS2
     pstwo_task();
+#elif __RC_TYPE == RC_GAMESIR_NOVA_LITE
+    Gamepad_Task();
+#endif
   }
   /* USER CODE END PS2_Task */
 }

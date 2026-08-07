@@ -5,6 +5,12 @@
 #include "chassisR_task.h"
 #include "ins_task.h"
 
+#define PS2_FAILSAFE_TIMEOUT_MS       100U
+#define PS2_RECONNECT_VALID_FRAMES      3U
+#define PS2_REINIT_INTERVAL_MS         250U
+#define PS2_NEUTRAL_ANALOG_MIN         112
+#define PS2_NEUTRAL_ANALOG_MAX         144
+
 //These are our button constants
 #define PSB_SELECT      1
 #define PSB_L3          2
@@ -27,6 +33,12 @@
 #define PSB_CIRCLE      14
 #define PSB_CROSS       15
 #define PSB_SQUARE      16
+
+/* Independent motor-force controls. L2 always has priority if both are held. */
+#define PS2_MOTOR_FORCE_OFF_BUTTON    PSB_L2
+#define PS2_MOTOR_FORCE_ON_BUTTON     PSB_R2
+#define PS2_MOTOR_FORCE_OFF_MASK      ((uint16_t)(1U << (PS2_MOTOR_FORCE_OFF_BUTTON - 1U)))
+#define PS2_MOTOR_FORCE_ON_MASK       ((uint16_t)(1U << (PS2_MOTOR_FORCE_ON_BUTTON - 1U)))
 
 //#define WHAMMY_BAR		8
 
@@ -52,9 +64,16 @@ typedef struct
 extern uint8_t Data[9];
 extern uint16_t MASK[16];
 extern uint16_t Handkey;
+extern volatile uint8_t ps2_link_online;
+extern volatile uint8_t ps2_raw_frame_valid;
+extern volatile uint8_t ps2_motor_force_enabled;
+extern volatile uint32_t ps2_last_valid_ms;
+extern volatile uint32_t ps2_failsafe_count;
 
 extern void PS2_data_read(ps2data_t *data);
 extern void PS2_data_process(ps2data_t *data,chassis_t *chassis,float dt);
+extern uint8_t PS2_FrameIsValid(void);
+extern uint8_t PS2_ControlsAreNeutral(const ps2data_t *data);
  
 	
 uint8_t PS2_RedLight(void);   //判断是否为红灯模式
@@ -77,6 +96,3 @@ void jump_key (chassis_t *chassis,ps2data_t *data);
 
 
 #endif
-
-
-

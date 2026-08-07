@@ -62,7 +62,7 @@ typedef struct
 	float turn_T;//yaw轴补偿
 	float leg_tp;//防劈叉补偿
 	
-	uint8_t start_flag;//启动标志
+	volatile uint8_t start_flag;//启动标志，多任务共享的紧急停机门控
 	
 	uint8_t recover_flag;//一种情况下的倒地自起标志
 	
@@ -87,7 +87,6 @@ extern void chassisR_control_loop(chassis_t *chassis,vmc_leg_t *vmcr,INS_t *ins,
 extern void roll_pid_init(PidTypeDef *roll_pid);
 void jump_loop_r(chassis_t *chassis,vmc_leg_t *vmcr,PidTypeDef *leg);
 #endif
-
 
 
 

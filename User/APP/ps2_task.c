@@ -15,6 +15,7 @@
   */
 	
 #include "ps2_task.h"
+#include "ps2_link_guard.h"
 #include "cmsis_os.h"
 #include "user_lib.h"
 ps2data_t ps2data;
@@ -44,20 +45,153 @@ uint16_t MASK[]={
 
 extern chassis_t chassis_move;
 extern INS_t INS;
+extern vmc_leg_t right;
+extern vmc_leg_t left;
+
+volatile uint8_t ps2_link_online = 0U;
+volatile uint8_t ps2_raw_frame_valid = 0U;
+volatile uint8_t ps2_motor_force_enabled = 0U;
+volatile uint32_t ps2_last_valid_ms = 0U;
+volatile uint32_t ps2_failsafe_count = 0U;
+
 uint32_t PS2_TIME=10;//ps2手柄任务周期是10ms
+
+#define PS2_TURN_ANALOG_CENTER   128
+#define PS2_TURN_ANALOG_DEADBAND   8
+
+static int16_t PS2_GetTurnInput(int16_t raw_value)
+{
+	int16_t centered_value = raw_value - PS2_TURN_ANALOG_CENTER;
+
+	if (centered_value > PS2_TURN_ANALOG_DEADBAND)
+	{
+		return centered_value - PS2_TURN_ANALOG_DEADBAND;
+	}
+	if (centered_value < -PS2_TURN_ANALOG_DEADBAND)
+	{
+		return centered_value + PS2_TURN_ANALOG_DEADBAND;
+	}
+
+	return 0;
+}
+
+static void PS2_ApplyFailsafe(ps2data_t *data, chassis_t *chassis)
+{
+	uint8_t i;
+
+	/* start_flag is read by both motor tasks; clear it before other state. */
+	chassis->start_flag = 0U;
+	chassis->recover_flag = 0U;
+	chassis->target_v = 0.0f;
+	chassis->v_set = 0.0f;
+	chassis->x_set = chassis->x_filter;
+	chassis->turn_set = chassis->total_yaw;
+	chassis->roll_target = 0.0f;
+	chassis->roll_set = 0.0f;
+	chassis->leg_set = 0.08f;
+	chassis->leg_left_set = chassis->leg_set;
+	chassis->leg_right_set = chassis->leg_set;
+	chassis->last_leg_set = chassis->leg_set;
+	chassis->last_leg_left_set = chassis->leg_left_set;
+	chassis->last_leg_right_set = chassis->leg_right_set;
+	chassis->count_key = 0U;
+	chassis->jump_flag = 0U;
+	chassis->jump_time_r = 0U;
+	chassis->jump_time_l = 0U;
+	chassis->jump_status_r = 0U;
+	chassis->jump_status_l = 0U;
+
+	for (i = 0U; i < 2U; i++)
+	{
+		chassis->wheel_motor[i].wheel_T = 0.0f;
+	}
+	for (i = 0U; i < 2U; i++)
+	{
+		right.torque_set[i] = 0.0f;
+		left.torque_set[i] = 0.0f;
+	}
+
+	data->key = 0;
+	data->last_key = 0;
+	data->lx = 127;
+	data->ly = 128;
+	data->rx = 127;
+	data->ry = 128;
+}
+
+uint8_t PS2_FrameIsValid(void)
+{
+	/* 0x73 is analog/red mode and 0x5A is the PS2 reply sync byte. */
+	return ((Data[1] == 0x73U) && (Data[2] == 0x5AU)) ? 1U : 0U;
+}
+
+uint8_t PS2_ControlsAreNeutral(const ps2data_t *data)
+{
+	uint16_t pressed_buttons;
+
+	/* Reconnect only after all buttons are released and all sticks are centred. */
+	pressed_buttons = (uint16_t)(~Handkey);
+	if (pressed_buttons != 0U)
+	{
+		return 0U;
+	}
+
+	return ((data->lx >= PS2_NEUTRAL_ANALOG_MIN) &&
+			(data->lx <= PS2_NEUTRAL_ANALOG_MAX) &&
+			(data->ly >= PS2_NEUTRAL_ANALOG_MIN) &&
+			(data->ly <= PS2_NEUTRAL_ANALOG_MAX) &&
+			(data->rx >= PS2_NEUTRAL_ANALOG_MIN) &&
+			(data->rx <= PS2_NEUTRAL_ANALOG_MAX) &&
+			(data->ry >= PS2_NEUTRAL_ANALOG_MIN) &&
+			(data->ry <= PS2_NEUTRAL_ANALOG_MAX)) ? 1U : 0U;
+}
+
 void pstwo_task(void)
-{		
-	 PS2_SetInit();
+{
+	ps2_link_guard_t link_guard;
+	ps2_link_action_t link_action;
+	uint32_t now_ms;
+	uint32_t last_reinit_ms;
+	uint8_t raw_frame_valid;
+
+	PS2_ApplyFailsafe(&ps2data, &chassis_move);
+	PS2_SetInit();
+	now_ms = HAL_GetTick();
+	last_reinit_ms = now_ms;
+	PS2_LinkGuard_Init(&link_guard, now_ms);
 
    while(1)
 	 {
-		 if(Data[1]!=0x73)
-		 {
-		  PS2_SetInit();
-		 }
-
 	   PS2_data_read(&ps2data);//读数据
-		 PS2_data_process(&ps2data,&chassis_move,(float)PS2_TIME/1000.0f);//处理数据，设置期望数据
+		now_ms = HAL_GetTick();
+		raw_frame_valid = PS2_FrameIsValid();
+
+		link_action = PS2_LinkGuard_Update(&link_guard, raw_frame_valid,
+			PS2_ControlsAreNeutral(&ps2data), now_ms,
+			PS2_FAILSAFE_TIMEOUT_MS, PS2_RECONNECT_VALID_FRAMES);
+
+		ps2_raw_frame_valid = raw_frame_valid;
+		ps2_link_online = link_guard.online;
+		ps2_last_valid_ms = link_guard.last_valid_ms;
+		ps2_failsafe_count = link_guard.failsafe_count;
+
+		if (link_action == PS2_LINK_PROCESS_FRAME)
+		{
+			PS2_data_process(&ps2data,&chassis_move,(float)PS2_TIME/1000.0f);//处理数据，设置期望数据
+		}
+		else if (link_action == PS2_LINK_APPLY_FAILSAFE)
+		{
+			PS2_ApplyFailsafe(&ps2data, &chassis_move);
+		}
+		ps2_motor_force_enabled = chassis_move.start_flag;
+
+		if ((raw_frame_valid == 0U) && (link_guard.online == 0U) &&
+			((uint32_t)(now_ms - last_reinit_ms) >= PS2_REINIT_INTERVAL_MS))
+		{
+			PS2_SetInit();
+			last_reinit_ms = HAL_GetTick();
+		}
+
 	   osDelay(PS2_TIME);
 	 }
 }
@@ -123,27 +257,27 @@ void PS2_data_read(ps2data_t *data)
 	}
 }
 
-extern vmc_leg_t right;			
-extern vmc_leg_t left;	
 float acc_test =0.005f;
 void PS2_data_process(ps2data_t *data,chassis_t *chassis,float dt)
-{   
-	if(data->last_key!=4&&data->key==4&&chassis->start_flag==0) 
+{
+	int16_t turn_input;
+
+	/* PS2 button bits are active-low. L2 is the higher-priority force-off key. */
+	if ((Handkey & PS2_MOTOR_FORCE_OFF_MASK) == 0U)
 	{
-		//手柄上的Start按键被按下
-		chassis->start_flag=1;
+		chassis->start_flag = 0U;
+		chassis->recover_flag = 0U;
+	}
+	else if (((Handkey & PS2_MOTOR_FORCE_ON_MASK) == 0U) &&
+		(chassis->start_flag == 0U))
+	{
+		chassis->start_flag = 1U;
 		if(chassis->recover_flag==0
 			&&((chassis->myPithR<((-3.1415926f)/4.0f)&&chassis->myPithR>((-3.1415926f)/2.0f))
 		  ||(chassis->myPithR>(3.1415926f/4.0f)&&chassis->myPithR<(3.1415926f/2.0f))))
 		{
 		  chassis->recover_flag=1;//需要自起
 		}
-	}
-	else if(data->last_key!=4&&data->key==4&&chassis->start_flag==1) 
-	{
-		//手柄上的Start按键被按下
-		chassis->start_flag=0;
-		chassis->recover_flag=0;
 	}
 	
 	data->last_key=data->key;
@@ -154,7 +288,8 @@ void PS2_data_process(ps2data_t *data,chassis_t *chassis,float dt)
 		slope_following(&chassis->target_v,&chassis->v_set,0.005f);	//	坡度跟随
 
 		chassis->x_set=chassis->x_set+chassis->v_set*dt;
-		chassis->turn_set=chassis->turn_set+(data->rx-127)*(-0.00025f);//往右大于0
+		turn_input = PS2_GetTurnInput(data->rx);
+		chassis->turn_set=chassis->turn_set+turn_input*(-0.00025f);//往右大于0
 	  			
 		//腿长变化
 		chassis->leg_set=chassis->leg_set+((float)(data->ly-128))*(-0.000015f);
@@ -396,7 +531,3 @@ void PS2_SetInit(void)
 	//PS2_VibrationMode();	//开启震动模式
 	PS2_ExitConfing();		//完成并保存配置
 }
-
-
-
-
