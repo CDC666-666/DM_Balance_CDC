@@ -11,7 +11,7 @@ HardwareSerial mc02Serial(2);
 
 // GameSir Nova Lite (first generation) uses this stable public BLE address.
 XboxSeriesXControllerESP32_asukiaaa::Core xboxController(
-    "3a:c3:d6:d6:1b:c1");
+    "b8:c5:e9:7a:fd:18");
 
 String xbox_string()
 {

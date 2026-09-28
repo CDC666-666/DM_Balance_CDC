@@ -2,7 +2,12 @@
 #include "fdcan.h"
 #include "dm4310_drv.h"
 #include "string.h"
+#include "robot_config.h"
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 #include "chassisR_task.h"
+#elif ROBOT_TYPE == ROBOT_ARM
+#include "arm_app.h"
+#endif
 
 FDCAN_RxHeaderTypeDef RxHeader1;
 uint8_t g_Can1RxData[64];
@@ -14,7 +19,7 @@ void FDCAN1_Config(void)
 {
   FDCAN_FilterTypeDef sFilterConfig;
   /* Configure Rx filter */	
-	sFilterConfig.IdType = FDCAN_STANDARD_ID;//À©Õ¹ID²»½ÓÊÕ
+	sFilterConfig.IdType = FDCAN_STANDARD_ID;//æ‰©å±•IDä¸æ¥æ”¶
   sFilterConfig.FilterIndex = 0;
   sFilterConfig.FilterType = FDCAN_FILTER_MASK;
   sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
@@ -25,17 +30,17 @@ void FDCAN1_Config(void)
 		Error_Handler();
 	}
 		
-/* È«¾Ö¹ıÂËÉèÖÃ */
-/* ½ÓÊÕµ½ÏûÏ¢IDÓë±ê×¼ID¹ıÂË²»Æ¥Åä£¬²»½ÓÊÜ */
-/* ½ÓÊÕµ½ÏûÏ¢IDÓëÀ©Õ¹ID¹ıÂË²»Æ¥Åä£¬²»½ÓÊÜ */
-/* ¹ıÂË±ê×¼IDÔ¶³ÌÖ¡ */ 
-/* ¹ıÂËÀ©Õ¹IDÔ¶³ÌÖ¡ */ 
+/* å…¨å±€è¿‡æ»¤è®¾ç½® */
+/* æ¥æ”¶åˆ°æ¶ˆæ¯IDä¸æ ‡å‡†IDè¿‡æ»¤ä¸åŒ¹é…ï¼Œä¸æ¥å— */
+/* æ¥æ”¶åˆ°æ¶ˆæ¯IDä¸æ‰©å±•IDè¿‡æ»¤ä¸åŒ¹é…ï¼Œä¸æ¥å— */
+/* è¿‡æ»¤æ ‡å‡†IDè¿œç¨‹å¸§ */ 
+/* è¿‡æ»¤æ‰©å±•IDè¿œç¨‹å¸§ */ 
   if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) != HAL_OK)
   {
     Error_Handler();
   }
 
-	/* ¿ªÆôRX FIFO0µÄĞÂÊı¾İÖĞ¶Ï */
+	/* å¼€å¯RX FIFO0çš„æ–°æ•°æ®ä¸­æ–­ */
   if (HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
   {
     Error_Handler();
@@ -93,7 +98,7 @@ uint8_t canx_send_data(FDCAN_HandleTypeDef *hcan, uint16_t id, uint8_t *data, ui
   TxHeader.TxFrameType = FDCAN_DATA_FRAME;  
   if(len<=8)	
 	{
-	  TxHeader.DataLength = len<<16;     // ·¢ËÍ³¤¶È£º8byte
+	  TxHeader.DataLength = len<<16;     // å‘é€é•¿åº¦ï¼š8byte
 	}
 	else  if(len==12)	
 	{
@@ -120,15 +125,15 @@ uint8_t canx_send_data(FDCAN_HandleTypeDef *hcan, uint16_t id, uint8_t *data, ui
 	 }
 											
 	TxHeader.ErrorStateIndicator =  FDCAN_ESI_ACTIVE;
-  TxHeader.BitRateSwitch = FDCAN_BRS_OFF;//±ÈÌØÂÊÇĞ»»¹Ø±Õ£¬²»ÊÊÓÃÓÚ¾­µäCAN
+  TxHeader.BitRateSwitch = FDCAN_BRS_OFF;//æ¯”ç‰¹ç‡åˆ‡æ¢å…³é—­ï¼Œä¸é€‚ç”¨äºç»å…¸CAN
   TxHeader.FDFormat =  FDCAN_CLASSIC_CAN;            // CANFD
   TxHeader.TxEventFifoControl =  FDCAN_NO_TX_EVENTS;  
-  TxHeader.MessageMarker = 0;//ÏûÏ¢±ê¼Ç
+  TxHeader.MessageMarker = 0;//æ¶ˆæ¯æ ‡è®°
 
-   // ·¢ËÍCANÖ¸Áî
+   // å‘é€CANæŒ‡ä»¤
 //  if(HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, data) != HAL_OK)
 //  {
-//        // ·¢ËÍÊ§°Ü´¦Àí
+//        // å‘é€å¤±è´¥å¤„ç†
 //       Error_Handler();      
 //  }
 	 HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, data);
@@ -136,7 +141,9 @@ uint8_t canx_send_data(FDCAN_HandleTypeDef *hcan, uint16_t id, uint8_t *data, ui
 }
 
 
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 extern chassis_t chassis_move;
+#endif
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 { 
@@ -145,16 +152,20 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     if(hfdcan->Instance == FDCAN1)
     {
       /* Retrieve Rx messages from RX FIFO0 */
-			memset(g_Can1RxData, 0, sizeof(g_Can1RxData));	//½ÓÊÕÇ°ÏÈÇå¿ÕÊı×é	
+			memset(g_Can1RxData, 0, sizeof(g_Can1RxData));	//æ¥æ”¶å‰å…ˆæ¸…ç©ºæ•°ç»„	
       HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader1, g_Can1RxData);
 			
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 			switch(RxHeader1.Identifier)
 			{
         case 3 :dm4310_fbdata(&chassis_move.joint_motor[0], g_Can1RxData,RxHeader1.DataLength);break;
         case 4 :dm4310_fbdata(&chassis_move.joint_motor[1], g_Can1RxData,RxHeader1.DataLength);break;	         	
 				case 0 :dm6215_fbdata(&chassis_move.wheel_motor[0], g_Can1RxData,RxHeader1.DataLength);break;
 				default: break;
-			}			
+			}
+#elif ROBOT_TYPE == ROBOT_ARM
+      Arm_OnCanFeedback(1U, RxHeader1.Identifier, g_Can1RxData, RxHeader1.DataLength);
+#endif
 	  }
   }
 }
@@ -168,16 +179,19 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
       /* Retrieve Rx messages from RX FIFO0 */
 			memset(g_Can2RxData, 0, sizeof(g_Can2RxData));
       HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &RxHeader2, g_Can2RxData);
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 			switch(RxHeader2.Identifier)
 			{
         case 3 :dm4310_fbdata(&chassis_move.joint_motor[2], g_Can2RxData,RxHeader2.DataLength);break;
         case 4 :dm4310_fbdata(&chassis_move.joint_motor[3], g_Can2RxData,RxHeader2.DataLength);break;	         	
 				case 0 :dm6215_fbdata(&chassis_move.wheel_motor[1], g_Can2RxData,RxHeader2.DataLength);break;
 				default: break;
-			}	
+			}
+#elif ROBOT_TYPE == ROBOT_ARM
+      Arm_OnCanFeedback(2U, RxHeader2.Identifier, g_Can2RxData, RxHeader2.DataLength);
+#endif
     }
   }
 }
-
 
 

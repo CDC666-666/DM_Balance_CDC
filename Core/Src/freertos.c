@@ -25,6 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "robot_config.h"
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 #include "INS_task.h"
 #include "chassisR_task.h"
 #include "chassisL_task.h"
@@ -32,6 +34,9 @@
 #include "ps2_task.h"
 #include "gamepad_task.h"
 #include "remote_input_config.h"
+#elif ROBOT_TYPE == ROBOT_ARM
+#include "arm_app.h"
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,11 +59,15 @@
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 osThreadId INS_TASKHandle;
 osThreadId CHASSISR_TASKHandle;
 osThreadId CHASSISL_TASKHandle;
 osThreadId OBSERVE_TASKHandle;
 osThreadId PS2_TASKHandle;
+#elif ROBOT_TYPE == ROBOT_ARM
+osThreadId ARM_TASKHandle;
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -66,11 +75,15 @@ osThreadId PS2_TASKHandle;
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 void INS_Task(void const * argument);
 void ChassisR_Task(void const * argument);
 void ChassisL_Task(void const * argument);
 void OBSERVE_Task(void const * argument);
 void PS2_Task(void const * argument);
+#elif ROBOT_TYPE == ROBOT_ARM
+void Arm_Task(void const * argument);
+#endif
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -105,6 +118,8 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
+  /* Wheel-leg tasks own the chassis motors and their CAN traffic. */
   /* definition and creation of INS_TASK */
   osThreadDef(INS_TASK, INS_Task, osPriorityRealtime, 0, 512);
   INS_TASKHandle = osThreadCreate(osThread(INS_TASK), NULL);
@@ -124,6 +139,11 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of PS2_TASK */
   osThreadDef(PS2_TASK, PS2_Task, osPriorityAboveNormal, 0, 128);
   PS2_TASKHandle = osThreadCreate(osThread(PS2_TASK), NULL);
+#elif ROBOT_TYPE == ROBOT_ARM
+  /* Arm mode creates no wheel-leg task, preventing shared motor/CAN ownership. */
+  osThreadDef(ARM_TASK, Arm_Task, osPriorityAboveNormal, 0, 256);
+  ARM_TASKHandle = osThreadCreate(osThread(ARM_TASK), NULL);
+#endif
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -149,6 +169,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE END StartDefaultTask */
 }
 
+#if ROBOT_TYPE == ROBOT_WHEEL_LEG
 /* USER CODE BEGIN Header_INS_Task */
 /**
 * @brief Function implementing the ins_task thread.
@@ -243,6 +264,18 @@ void PS2_Task(void const * argument)
   }
   /* USER CODE END PS2_Task */
 }
+#elif ROBOT_TYPE == ROBOT_ARM
+void Arm_Task(void const * argument)
+{
+  (void)argument;
+  Arm_Init();
+  for(;;)
+  {
+    Arm_Update();
+    osDelay(ARM_CONTROL_PERIOD_MS);
+  }
+}
+#endif
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */

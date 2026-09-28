@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H723xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Drivers/CMSIS/DSP/Include;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../User/Algorithm/EKF;../User/Algorithm/kalman;../User/Algorithm/mahony;../User/APP;../User/Bsp;../User/Devices/BMI088;../User/Devices/DM_Motor;../User/Algorithm/VMC;../User/Controller;../User/Lib;../User/Algorithm/PID</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Drivers/CMSIS/DSP/Include;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../User/Algorithm/EKF;../User/Algorithm/kalman;../User/Algorithm/mahony;../User/Algorithm/Arm;../User/APP;../User/APP/Arm;../User/Bsp;../User/Devices/BMI088;../User/Devices/DM_Motor;../User/Algorithm/VMC;../User/Controller;../User/Lib;../User/Algorithm/PID</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -888,6 +888,16 @@
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Algorithm\PID\pid.c</FilePath>
+            </File>
+            <File>
+              <FileName>arm_limit.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Algorithm\Arm\arm_limit.c</FilePath>
+            </File>
+            <File>
+              <FileName>arm_algorithm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Algorithm\Arm\arm_algorithm.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1587,6 +1597,21 @@
               <FileName>remote_input_config.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\APP\remote_input_config.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\APP\robot_config.h</FilePath>
+            </File>
+            <File>
+              <FileName>arm_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\APP\Arm\arm_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>arm_app.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\APP\Arm\arm_app.h</FilePath>
             </File>
           </Files>
         </Group>
