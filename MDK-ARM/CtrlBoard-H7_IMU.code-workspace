@@ -10,6 +10,14 @@
             "--header-insertion=never"
         ],
         "files.autoGuessEncoding": true,
+        "EIDE.ARM.GCC.InstallDirectory": "D:\\Apps\\arm-gnu-toolchain-15.2.rel1-mingw-w64-x86_64-arm-none-eabi",
+        "EIDE.ARM.GCC.Prefix": "arm-none-eabi-",
+        "EIDE.OpenOCD.ExePath": "C:\\msys64\\mingw64\\bin\\openocd.exe",
+        "cortex-debug.openocdPath": "C:\\msys64\\mingw64\\bin\\openocd.EXE",
+        "cortex-debug.gdbPath": "D:\\Apps\\arm-gnu-toolchain-15.2.rel1-mingw-w64-x86_64-arm-none-eabi\\bin\\arm-none-eabi-gdb.exe",
+        "cortex-debug.armToolchainPath": "D:\\Apps\\arm-gnu-toolchain-15.2.rel1-mingw-w64-x86_64-arm-none-eabi\\bin",
+        "cortex-debug.gdbPath.windows": "D:\\Apps\\arm-gnu-toolchain-15.2.rel1-mingw-w64-x86_64-arm-none-eabi\\bin\\arm-none-eabi-gdb.exe",
+        "cortex-debug.armToolchainPath.windows": "D:\\Apps\\arm-gnu-toolchain-15.2.rel1-mingw-w64-x86_64-arm-none-eabi\\bin",
         "C_Cpp.default.configurationProvider": "cl.eide",
         "C_Cpp.errorSquiggles": "disabled",
         "files.associations": {

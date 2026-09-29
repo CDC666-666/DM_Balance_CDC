@@ -14,6 +14,7 @@ uint8_t g_Can1RxData[64];
 
 FDCAN_RxHeaderTypeDef RxHeader2;
 uint8_t g_Can2RxData[64];
+CanTxDebugInfo can_tx_debug;
 
 void FDCAN1_Config(void)
 {
@@ -92,6 +93,7 @@ void FDCAN2_Config(void)
 uint8_t canx_send_data(FDCAN_HandleTypeDef *hcan, uint16_t id, uint8_t *data, uint32_t len)
 {
 	FDCAN_TxHeaderTypeDef TxHeader;
+	HAL_StatusTypeDef status;
 
 	TxHeader.Identifier = id;                 // CAN ID
   TxHeader.IdType =  FDCAN_STANDARD_ID ;        
@@ -136,8 +138,21 @@ uint8_t canx_send_data(FDCAN_HandleTypeDef *hcan, uint16_t id, uint8_t *data, ui
 //        // 发送失败处理
 //       Error_Handler();      
 //  }
-	 HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, data);
-	 return 0;
+	can_tx_debug.attempt_count++;
+	can_tx_debug.last_id = id;
+	can_tx_debug.last_bus = (hcan->Instance == FDCAN1) ? 1U :
+	                        ((hcan->Instance == FDCAN2) ? 2U : 0U);
+	status = HAL_FDCAN_AddMessageToTxFifoQ(hcan, &TxHeader, data);
+	can_tx_debug.last_status = (uint8_t)status;
+	if (status == HAL_OK)
+	{
+		can_tx_debug.success_count++;
+	}
+	else
+	{
+		can_tx_debug.failure_count++;
+	}
+	return (uint8_t)status;
 }
 
 
@@ -193,5 +208,4 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
     }
   }
 }
-
 

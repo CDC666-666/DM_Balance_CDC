@@ -34,6 +34,19 @@ typedef enum
     ArmStateFault
 } ArmState_e;
 
+typedef struct
+{
+    volatile uint32_t update_count;
+    volatile uint32_t enable_request_count;
+    volatile uint32_t feedback_count;
+    volatile uint16_t last_feedback_id;
+    volatile uint8_t last_motor_id;
+    volatile uint8_t last_motor_state;
+    volatile uint8_t app_state;
+} ArmDebugInfo;
+
+extern ArmDebugInfo arm_debug;
+
 void Arm_Init(void);
 void Arm_Update(void);
 void Arm_SetJointTarget(uint8_t joint, float position);

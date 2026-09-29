@@ -32,18 +32,23 @@ typedef enum
 #define ARM_JOINT2_ZERO_OFFSET      0.0f
 #define ARM_JOINT2_MIN_POSITION    (-0.25f)
 #define ARM_JOINT2_MAX_POSITION     0.25f
-#define ARM_JOINT2_MAX_VELOCITY     0.20f
+#define ARM_JOINT2_MAX_VELOCITY     3.20f
 #define ARM_JOINT2_MAX_TORQUE       0.50f
 #define ARM_JOINT2_MIT_KP           2.0f
 #define ARM_JOINT2_MIT_KD           0.10f
 
+/* Joint2 commissioning command: 0.5 rev/s = pi rad/s, continuous rotation. */
+#define ARM_JOINT2_SPEED_TEST_ENABLE 1
+#define ARM_JOINT2_SPEED_RAD_S       3.14159265f
+#define ARM_JOINT2_SPEED_MIT_KD      0.10f
+
 #define ARM_CONTROL_PERIOD_MS       1U
 #define ARM_FEEDBACK_TIMEOUT_MS     50U
-#define ARM_STARTUP_TIMEOUT_MS      500U
+#define ARM_STARTUP_TIMEOUT_MS      3000U
 #define ARM_ENABLE_RETRY_MS         20U
 
 /* Set to 1 only after CAN IDs, direction, zero and mechanical clearance are checked. */
-#define ARM_LOCAL_TEST_ENABLE       1
+#define ARM_LOCAL_TEST_ENABLE       0
 #define ARM_LOCAL_TEST_STEP_MS      2000U
 
 #if (ARM_JOINT2_CAN_BUS != 1U) && (ARM_JOINT2_CAN_BUS != 2U)
@@ -52,6 +57,10 @@ typedef enum
 
 #if (ARM_LOCAL_TEST_ENABLE != 0) && (ARM_LOCAL_TEST_ENABLE != 1)
 #error "ARM_LOCAL_TEST_ENABLE must be 0 or 1"
+#endif
+
+#if (ARM_JOINT2_SPEED_TEST_ENABLE != 0) && (ARM_JOINT2_SPEED_TEST_ENABLE != 1)
+#error "ARM_JOINT2_SPEED_TEST_ENABLE must be 0 or 1"
 #endif
 
 #endif /* ROBOT_CONFIG_H */

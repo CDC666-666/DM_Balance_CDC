@@ -33,6 +33,7 @@
 #include "bsp_dwt.h"
 #include "BMI088Middleware.h"
 #include "can_bsp.h"
+#include "robot_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,15 +110,24 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	DWT_Init(480);
   
-    /* BMI088初始化 *///之前已经对角速度和加速度的零飘校准过了，所以之后上电就不需要校准。如果硬件设备更换，则需要重新校准下
+  /* The wheel-leg application requires the IMU before it starts control.
+   * The arm application must still start CAN/FreeRTOS when the IMU is absent. */
+#if (ROBOT_TYPE == ROBOT_WHEEL_LEG)
   while (BMI088_init(&hspi2, 0) != BMI088_NO_ERROR)
 	{
 	  ;
 	}
-	Power_OUT1_ON;//imu初始化完成，可控电源打开，led灯亮
+#endif
+#if (ROBOT_TYPE == ROBOT_ARM)
+	/* Upper-left 2+2 connector: PC14 enables its power output; CAN is FDCAN1. */
+	Power_OUT1_OFF;
 	Power_OUT2_ON;
+#else
+	Power_OUT1_ON;
+	Power_OUT2_ON;
+#endif
 	
-  FDCAN1_Config();//can过滤器初始化
+  FDCAN1_Config();//can杩囨护鍣ㄥ垵濮嬪寲
 	FDCAN2_Config();
   /* USER CODE END 2 */
 
