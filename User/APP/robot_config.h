@@ -12,7 +12,7 @@ typedef enum
 } RobotType_e;
 
 #ifndef ROBOT_TYPE
-#define ROBOT_TYPE ROBOT_WHEEL_LEG
+#define ROBOT_TYPE ROBOT_ARM
 #endif
 
 #if (ROBOT_TYPE != ROBOT_WHEEL_LEG) && (ROBOT_TYPE != ROBOT_ARM)
@@ -25,8 +25,8 @@ typedef enum
  * the actual arm wiring before selecting ROBOT_ARM.
  */
 #define ARM_JOINT2_CAN_BUS          1U
-#define ARM_JOINT2_MOTOR_ID         8U
-#define ARM_JOINT2_MASTER_ID        4U
+#define ARM_JOINT2_MOTOR_ID         6U
+#define ARM_JOINT2_MASTER_ID        3U
 #define ARM_JOINT2_MOTOR_VERSION    2U
 #define ARM_JOINT2_DIRECTION        1.0f
 #define ARM_JOINT2_ZERO_OFFSET      0.0f
@@ -43,7 +43,7 @@ typedef enum
 #define ARM_ENABLE_RETRY_MS         20U
 
 /* Set to 1 only after CAN IDs, direction, zero and mechanical clearance are checked. */
-#define ARM_LOCAL_TEST_ENABLE       0
+#define ARM_LOCAL_TEST_ENABLE       1
 #define ARM_LOCAL_TEST_STEP_MS      2000U
 
 #if (ARM_JOINT2_CAN_BUS != 1U) && (ARM_JOINT2_CAN_BUS != 2U)
