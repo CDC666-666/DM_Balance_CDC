@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H723xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Drivers/CMSIS/DSP/Include;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../User/Algorithm/EKF;../User/Algorithm/kalman;../User/Algorithm/mahony;../User/Algorithm/Arm;../User/APP;../User/APP/Arm;../User/APP/Arm/Model;../User/Bsp;../User/Devices/BMI088;../User/Devices/DM_Motor;../User/Devices/Motor;../User/Algorithm/VMC;../User/Controller;../User/Lib;../User/Algorithm/PID</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Drivers/CMSIS/DSP/Include;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../User/Algorithm/EKF;../User/Algorithm/kalman;../User/Algorithm/mahony;../User/Algorithm/Arm;../User/APP;../User/APP/Arm;../User/Bsp;../User/Devices/BMI088;../User/Devices/DM_Motor;../User/Devices/Motor;../User/Algorithm/VMC;../User/Controller;../User/Lib;../User/Algorithm/PID</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1619,16 +1619,6 @@
               <FilePath>..\User\APP\robot_config.h</FilePath>
             </File>
             <File>
-              <FileName>arm_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\Arm\arm_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>arm_app.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\APP\Arm\arm_app.h</FilePath>
-            </File>
-            <File>
               <FileName>arm_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\APP\Arm\arm_task.c</FilePath>
@@ -1637,11 +1627,6 @@
               <FileName>arm_config.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\APP\Arm\arm_config.c</FilePath>
-            </File>
-            <File>
-              <FileName>arm_3dof.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\Arm\Model\arm_3dof.c</FilePath>
             </File>
           </Files>
         </Group>

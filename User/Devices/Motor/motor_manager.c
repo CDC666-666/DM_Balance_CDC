@@ -14,9 +14,9 @@ typedef struct
     Motor_s *motor;
 } MotorLookupEntry_s;
 
-static Motor_s motor_pool[MOTOR_MANAGER_MAX_MOTORS];
 static MotorLookupEntry_s motor_lookup[MOTOR_LOOKUP_CAPACITY];
 static uint8_t motor_used_count;
+MotorManagerDebug_s motor_manager_debug;
 
 static uint8_t MotorManager_Hash(uint8_t can_bus,
                                  MotorProtocol_e protocol,
@@ -90,49 +90,45 @@ static void MotorManager_SetEntry(MotorLookupEntry_s *entry,
 
 void MotorManager_Init(void)
 {
-    memset(motor_pool, 0, sizeof(motor_pool));
     memset(motor_lookup, 0, sizeof(motor_lookup));
+    memset(&motor_manager_debug, 0, sizeof(motor_manager_debug));
     motor_used_count = 0U;
 }
 
-Motor_s *MotorManager_Register(MotorType_e type,
-                               uint8_t can_bus,
-                               uint8_t id,
-                               MotorControlMode_e control_mode)
+uint8_t MotorManager_Attach(Motor_s *motor)
 {
-    MotorProtocol_e protocol = Motor_GetProtocol(type);
+    MotorProtocol_e protocol;
     MotorLookupEntry_s *entry;
-    Motor_s *motor;
 
+    if ((motor == 0) || (motor->initialized == 0U))
+    {
+        return 0U;
+    }
+
+    protocol = Motor_GetProtocol(motor->type);
     if ((protocol == MOTOR_PROTOCOL_NONE) ||
         (motor_used_count >= MOTOR_MANAGER_MAX_MOTORS) ||
-        (MotorManager_FindEntry(motor_lookup, can_bus, protocol, id) != 0))
+        (MotorManager_FindEntry(motor_lookup,
+                                motor->can_bus,
+                                protocol,
+                                motor->id) != 0))
     {
-        return 0;
+        return 0U;
     }
 
     entry = MotorManager_FindFreeEntry(motor_lookup,
-                                       can_bus,
+                                       motor->can_bus,
                                        protocol,
-                                       id);
+                                       motor->id);
     if (entry == 0)
     {
-        return 0;
+        return 0U;
     }
 
-    motor = &motor_pool[motor_used_count];
-    if (MotorInit(motor,
-                  id,
-                  can_bus,
-                  type,
-                  control_mode) != MOTOR_STATUS_OK)
-    {
-        return 0;
-    }
-
-    MotorManager_SetEntry(entry, motor, protocol, id);
+    MotorManager_SetEntry(entry, motor, protocol, motor->id);
     motor_used_count++;
-    return motor;
+    motor_manager_debug.registered_count = motor_used_count;
+    return 1U;
 }
 
 Motor_s *MotorManager_GetById(uint8_t can_bus,
@@ -144,6 +140,28 @@ Motor_s *MotorManager_GetById(uint8_t can_bus,
                                                         protocol,
                                                         id);
     return (entry != 0) ? entry->motor : 0;
+}
+
+uint8_t MotorManager_DecodeFeedback(uint8_t can_bus,
+                                    MotorProtocol_e protocol,
+                                    uint8_t id,
+                                    uint8_t *data,
+                                    uint32_t data_len)
+{
+    Motor_s *motor = MotorManager_GetById(can_bus, protocol, id);
+
+    if (motor == 0)
+    {
+        motor_manager_debug.ignored_feedback_count++;
+        return 0U;
+    }
+
+    Motor_DecodeFeedback(motor, data, data_len);
+    motor_manager_debug.feedback_count++;
+    motor_manager_debug.last_can_bus = can_bus;
+    motor_manager_debug.last_id = id;
+    motor_manager_debug.last_motor_type = (uint8_t)motor->type;
+    return 1U;
 }
 
 uint8_t MotorManager_GetRegisteredCount(void)

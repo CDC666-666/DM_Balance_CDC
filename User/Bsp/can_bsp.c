@@ -6,7 +6,7 @@
 #if ROBOT_TYPE == ROBOT_WHEEL_LEG
 #include "chassisR_task.h"
 #elif ROBOT_TYPE == ROBOT_ARM
-#include "arm_app.h"
+#include "motor_manager.h"
 #endif
 
 FDCAN_RxHeaderTypeDef RxHeader1;
@@ -179,7 +179,14 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 				default: break;
 			}
 #elif ROBOT_TYPE == ROBOT_ARM
-      Arm_OnCanFeedback(1U, RxHeader1.Identifier, g_Can1RxData, RxHeader1.DataLength);
+      if (RxHeader1.Identifier <= 0xFFU)
+      {
+        MotorManager_DecodeFeedback(1U,
+                                    MOTOR_PROTOCOL_DM,
+                                    (uint8_t)RxHeader1.Identifier,
+                                    g_Can1RxData,
+                                    RxHeader1.DataLength);
+      }
 #endif
 	  }
   }
@@ -203,9 +210,15 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
 				default: break;
 			}
 #elif ROBOT_TYPE == ROBOT_ARM
-      Arm_OnCanFeedback(2U, RxHeader2.Identifier, g_Can2RxData, RxHeader2.DataLength);
+      if (RxHeader2.Identifier <= 0xFFU)
+      {
+        MotorManager_DecodeFeedback(2U,
+                                    MOTOR_PROTOCOL_DM,
+                                    (uint8_t)RxHeader2.Identifier,
+                                    g_Can2RxData,
+                                    RxHeader2.DataLength);
+      }
 #endif
     }
   }
 }
-

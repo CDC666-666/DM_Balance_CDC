@@ -2,6 +2,9 @@
 
 #include <string.h>
 
+#include "motor_dm.h"
+#include "motor_manager.h"
+
 static uint16_t Motor_GetDmDriverMode(MotorControlMode_e control_mode)
 {
     switch (control_mode)
@@ -72,5 +75,85 @@ MotorStatus_e MotorInit(Motor_s *motor,
     }
 
     motor->initialized = 1U;
+    /* 与参考工程一致，初始化完成后由 MotorInit 自动加入统一电机表。 */
+    if (MotorManager_Attach(motor) == 0U)
+    {
+        memset(motor, 0, sizeof(*motor));
+        return MOTOR_STATUS_REGISTRATION_FAILED;
+    }
     return MOTOR_STATUS_OK;
+}
+
+void Motor_Enable(Motor_s *motor)
+{
+    if (motor == 0)
+    {
+        return;
+    }
+
+    switch (motor->type)
+    {
+        case MOTOR_TYPE_DM4310:
+            MotorDM_Enable(motor);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void Motor_Disable(Motor_s *motor)
+{
+    if (motor == 0)
+    {
+        return;
+    }
+
+    switch (motor->type)
+    {
+        case MOTOR_TYPE_DM4310:
+            MotorDM_Disable(motor);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void Motor_SendCommand(Motor_s *motor)
+{
+    if (motor == 0)
+    {
+        return;
+    }
+
+    switch (motor->type)
+    {
+        case MOTOR_TYPE_DM4310:
+            MotorDM_SendCommand(motor);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void Motor_DecodeFeedback(Motor_s *motor,
+                          uint8_t *data,
+                          uint32_t data_len)
+{
+    if (motor == 0)
+    {
+        return;
+    }
+
+    switch (motor->type)
+    {
+        case MOTOR_TYPE_DM4310:
+            MotorDM_DecodeFeedback(motor, data, data_len);
+            break;
+
+        default:
+            break;
+    }
 }

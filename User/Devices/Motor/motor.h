@@ -35,7 +35,8 @@ typedef enum
 {
     MOTOR_STATUS_OK = 0,
     MOTOR_STATUS_INVALID_ARGUMENT,
-    MOTOR_STATUS_UNSUPPORTED
+    MOTOR_STATUS_UNSUPPORTED,
+    MOTOR_STATUS_REGISTRATION_FAILED
 } MotorStatus_e;
 
 typedef struct
@@ -85,5 +86,11 @@ MotorStatus_e MotorInit(Motor_s *motor,
                         uint8_t can_bus,
                         MotorType_e type,
                         MotorControlMode_e control_mode);
+void Motor_Enable(Motor_s *motor);
+void Motor_Disable(Motor_s *motor);
+void Motor_SendCommand(Motor_s *motor);
+void Motor_DecodeFeedback(Motor_s *motor,
+                          uint8_t *data,
+                          uint32_t data_len);
 
 #endif /* MOTOR_H */

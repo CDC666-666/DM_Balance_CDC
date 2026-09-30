@@ -35,7 +35,7 @@
 #include "gamepad_task.h"
 #include "remote_input_config.h"
 #elif ROBOT_TYPE == ROBOT_ARM
-#include "arm_app.h"
+#include "arm_task.h"
 #endif
 /* USER CODE END Includes */
 
@@ -267,13 +267,7 @@ void PS2_Task(void const * argument)
 #elif ROBOT_TYPE == ROBOT_ARM
 void Arm_Task(void const * argument)
 {
-  (void)argument;
-  Arm_Init();
-  for(;;)
-  {
-    Arm_Update();
-    osDelay(ARM_CONTROL_PERIOD_MS);
-  }
+  ArmTask_Run(argument);
 }
 #endif
 

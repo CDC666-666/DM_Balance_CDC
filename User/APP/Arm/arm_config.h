@@ -27,6 +27,8 @@ typedef struct
     float max_position;
     float max_velocity;
     float max_torque;
+    float kp;
+    float kd;
 
     uint8_t installed;
     uint8_t output_enabled;
@@ -34,4 +36,4 @@ typedef struct
 
 extern const ArmJointConfig_s arm_3dof_joint_config[ARM_JOINT_COUNT];
 
-#endif /* ARM_CONFIG_H */
+#endif /* 机械臂配置接口 */

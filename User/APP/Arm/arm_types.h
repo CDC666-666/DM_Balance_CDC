@@ -3,14 +3,28 @@
 
 #include <stdint.h>
 
-#include "arm_app.h"
+#include "arm_algorithm.h"
 #include "motor.h"
+
+typedef struct
+{
+    float q[ARM_JOINT_COUNT];
+    float dq[ARM_JOINT_COUNT];
+    float torque[ARM_JOINT_COUNT];
+} ArmCommand;
+
+typedef enum
+{
+    ArmStateDisabled = 0,
+    ArmStateWaitingFeedback,
+    ArmStateRunning,
+    ArmStateFault
+} ArmState_e;
 
 typedef enum
 {
     ArmModeDisabled = 0,
-    ArmModeNormal,
-    ArmModeCommissioning
+    ArmModeNormal
 } ArmMode_e;
 
 typedef struct
@@ -23,9 +37,12 @@ typedef struct
     float max_position;
     float max_velocity;
     float max_torque;
+    float kp;
+    float kd;
 
     uint8_t installed;
     uint8_t output_enabled;
+    uint8_t output_allowed;
 } ArmJoint_s;
 
 typedef struct
@@ -46,9 +63,12 @@ typedef struct
     ArmMode_e mode;
 
     ArmCommand command;
+    ArmCommand reference;
     ArmFeedback feedback;
 
     uint32_t update_count;
+    uint32_t enable_request_count;
+    uint8_t stop_requested;
 } Arm_s;
 
-#endif /* ARM_TYPES_H */
+#endif /* 机械臂公共类型 */
